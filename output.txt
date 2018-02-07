@@ -1,0 +1,40 @@
+Got 5043 ratings from 97 users on 942 movies.
+Training: 3098, validation: 997, test: 1024
+RMSE (validation) = 6.826293474110666 for the model trained with rank = 1, lambda = 0.001, and numIter = 5.
+RMSE (validation) = 11.162888027595022 for the model trained with rank = 1, lambda = 0.001, and numIter = 10.
+RMSE (validation) = 3.2350527184157314 for the model trained with rank = 1, lambda = 0.01, and numIter = 5.
+RMSE (validation) = 1.2393576774217245 for the model trained with rank = 1, lambda = 0.01, and numIter = 10.
+RMSE (validation) = 3.2265195577672277 for the model trained with rank = 1, lambda = 0.1, and numIter = 5.
+RMSE (validation) = 1.1506687154749693 for the model trained with rank = 1, lambda = 0.1, and numIter = 10.
+RMSE (validation) = 2.69011324484576 for the model trained with rank = 5, lambda = 0.001, and numIter = 5.
+RMSE (validation) = 1.968663130864513 for the model trained with rank = 5, lambda = 0.001, and numIter = 10.
+RMSE (validation) = 1.6111462395959293 for the model trained with rank = 5, lambda = 0.01, and numIter = 5.
+RMSE (validation) = 1.498356311706359 for the model trained with rank = 5, lambda = 0.01, and numIter = 10.
+RMSE (validation) = 1.1736462546863389 for the model trained with rank = 5, lambda = 0.1, and numIter = 5.
+RMSE (validation) = 1.0382966112040481 for the model trained with rank = 5, lambda = 0.1, and numIter = 10.
+RMSE (validation) = 2.509302310615701 for the model trained with rank = 10, lambda = 0.001, and numIter = 5.
+RMSE (validation) = 2.447390892385889 for the model trained with rank = 10, lambda = 0.001, and numIter = 10.
+RMSE (validation) = 1.7829451887776373 for the model trained with rank = 10, lambda = 0.01, and numIter = 5.
+RMSE (validation) = 1.7901984907124584 for the model trained with rank = 10, lambda = 0.01, and numIter = 10.
+RMSE (validation) = 1.0414514506176777 for the model trained with rank = 10, lambda = 0.1, and numIter = 5.
+RMSE (validation) = 0.9760007447257172 for the model trained with rank = 10, lambda = 0.1, and numIter = 10.
+The best model was trained with rank = 10 and lambda = 0.1, and numIter = 10, and its RMSE on the test set is 0.9678605307753333.
+The best model improves the baseline by 32,09%.
+Movies recommended for userID = 1097
+ 1: tt0213149	Weekend	Cinema	Partner - rating: 5.337279063621459
+ 2: tt0088763	Weekend	Home	Family - rating: 4.809201761957565
+ 3: tt0268380	Weekend	Cinema	Partner - rating: 4.6475217775689055
+ 4: tt0268380	Weekend	Home	Family - rating: 4.495622240884464
+ 5: tt0109830	Weekend	Cinema	Partner - rating: 4.482687274501462
+Movies recommended for userID = 1097 using previously saved best model
+2018-02-07 23:45:45 WARN  MatrixFactorizationModel:66 - User factor does not have a partitioner. Prediction on individual records could be slow.
+2018-02-07 23:45:45 WARN  MatrixFactorizationModel:66 - User factor is not cached. Prediction could be slow.
+2018-02-07 23:45:45 WARN  MatrixFactorizationModel:66 - Product factor does not have a partitioner. Prediction on individual records could be slow.
+2018-02-07 23:45:45 WARN  MatrixFactorizationModel:66 - Product factor is not cached. Prediction could be slow.
+ 1: tt0213149	Weekend	Cinema	Partner - rating: 5.337279063621459
+ 2: tt0088763	Weekend	Home	Family - rating: 4.809201761957565
+ 3: tt0268380	Weekend	Cinema	Partner - rating: 4.6475217775689055
+ 4: tt0268380	Weekend	Home	Family - rating: 4.495622240884464
+ 5: tt0109830	Weekend	Cinema	Partner - rating: 4.482687274501462
+
+Process finished with exit code 0
