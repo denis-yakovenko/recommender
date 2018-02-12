@@ -1,1 +1,1 @@
-{"class":"org.apache.spark.mllib.recommendation.MatrixFactorizationModel","version":"1.0","rank":10}
+{"class":"org.apache.spark.mllib.recommendation.MatrixFactorizationModel","version":"1.0","rank":1}
