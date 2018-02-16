@@ -88,12 +88,27 @@ public class JavaALSExample {
 
         // $example on$
         JavaRDD<Rating> ratingsRDD = spark
-                .read().textFile("data/ratings.csv").javaRDD()
+                .read().textFile("data/ratings_small.csv").javaRDD()
                 .map(Rating::parseRating);
         Dataset<Row> ratings = spark.createDataFrame(ratingsRDD, Rating.class);
-        Dataset<Row>[] splits = ratings.randomSplit(new double[]{0.8, 0.2});
+
+        ratings.printSchema();
+        ratings.show(20, false);
+
+        Dataset<Row>[] splits = ratings.randomSplit(new double[]{0.6, 0.2, 0.2});
         Dataset<Row> training = splits[0];
         Dataset<Row> test = splits[1];
+        Dataset<Row> validation = splits[2];
+        Long numTraining = training.count();
+        Long numTest = test.count();
+        Long numValidation = validation.count();
+        System.out.println("Training: " + numTraining + ", test: " + numTest + ", validation: " + numValidation);
+
+        Long numRatings = ratings.count();
+        Long numUsers = ratings.select("userId").distinct().count();
+        Long numMovies = ratings.select("movieId").distinct().count();
+        System.out.println("Got " + numRatings + " ratings from " + numUsers + " users on " + numMovies + " movies.");
+
 
         // Build the recommendation model using ALS on the training data
         ALS als = new ALS()
@@ -130,8 +145,8 @@ public class JavaALSExample {
     Dataset<Row> movieSubSetRecs = model.recommendForItemSubset(movies, 10);
 */
         // $example off$
-        userRecs.show();
-        movieRecs.show();
+        userRecs.show(false);
+        movieRecs.show(false);
 /*
     userSubsetRecs.show();
     movieSubSetRecs.show();

@@ -139,8 +139,8 @@ public class MovieLensTransformJava {
 
         /** train models and evaluate them on the validation set */
         List<Integer> ranks = Arrays.asList(1, 5, 10);
-        List<Double> lambdas = Arrays.asList(0.001, 0.01, 0.1);
-        List<Integer> numIters = Arrays.asList(5, 10);
+        List<Double> lambdas = Arrays.asList(1.0, 0.1);
+        List<Integer> numIters = Arrays.asList(/*5, */10);
         MatrixFactorizationModel bestModel = null;
         Double bestValidationRmse = Double.MAX_VALUE;
         Integer bestRank = 0;
@@ -182,6 +182,7 @@ public class MovieLensTransformJava {
         Double meanRating = training.union(validation).mapToDouble(Rating::rating).mean();
         Double baselineRMSE = Math.sqrt(test.mapToDouble(x -> (meanRating - x.rating()) * (meanRating - x.rating())).mean());
         Double improvement = (baselineRMSE - testRMSE) / baselineRMSE * 100;
+        System.out.println("meanRating " + meanRating + " baselineRMSE " + baselineRMSE + " best model RMSE " + testRMSE);
         System.out.println("The best model improves the baseline by " + String.format("%1.2f", improvement) + "%.");
 
         /** make personalized recommendations */
