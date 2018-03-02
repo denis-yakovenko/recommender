@@ -21,6 +21,17 @@ public class Playground {
         SparkSession spark = SparkSession.builder().master("local[*]").appName("CARS").getOrCreate();
         spark.sparkContext().setLogLevel("ERROR");
 
+        /*
+        Dataset<Row> df = spark
+                .sqlContext()
+                .createDataset(
+                        JavaPairRDD.toRDD(predictionAndLabels1),
+                        Encoders.tuple(
+                                Encoders.DOUBLE(), Encoders.DOUBLE()
+                        )
+                )
+                .toDF();*/
+
         StructType schema = createStructType(new StructField[]{
                 createStructField("id", IntegerType, false),
                 createStructField("hour", IntegerType, false),

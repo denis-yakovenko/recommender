@@ -1,5 +1,6 @@
 package recommender;
 
+import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.ml.evaluation.RegressionEvaluator;
 import org.apache.spark.ml.feature.StringIndexer;
 import org.apache.spark.ml.feature.StringIndexerModel;
@@ -44,13 +45,13 @@ public class ContextualPreAndPostFiltering {
         userContext.put("Companion", "Family");
 
         /* showing dataSet total counts */
-        Util.showDataSetStatistics(dataSet);
+        showDataSetStatistics();
 
         /* indexing user, item and context columns by integer values */
         createIndexes();
 
         /* rescaling rating to range [0, 1] */
-        dataSet = Util.getWithRescaledRating(dataSet);
+        rescaledRatings();
 
         /* training the ALS model */
         trainModel();
@@ -164,8 +165,8 @@ public class ContextualPreAndPostFiltering {
     private static void trainModel() {
         /* splitting dataSet into test and training splits */
         Dataset<Row>[] splits = dataSet.randomSplit(new double[]{0.8, 0.2});
-        Dataset<Row>training = splits[0];
-        Dataset<Row>test = splits[1];
+        Dataset<Row> training = splits[0];
+        Dataset<Row> test = splits[1];
         Long numTraining = training.count();
         Long numTest = test.count();
         System.out.println("Training: " + numTraining + ", test: " + numTest);
@@ -205,8 +206,58 @@ public class ContextualPreAndPostFiltering {
         System.out.println(String.format("model mean Rating %.3f baseline RMSE %.3f model RMSE %.3f", meanRating, baselineRMSE, RMSE));
         System.out.println(String.format("The model differs from the baseline by %.3f percents", improvement));
 
+
+        //test.show();
+        //predictions.show();
+
+        //predictions.select(round(col("rating").as("rating")), round(col("prediction")).as("prediction")).show();
+
+        MulticlassClassificationEvaluator multiclassClassificationEvaluator = new MulticlassClassificationEvaluator()
+                .setLabelCol("rating")
+                .setPredictionCol("prediction")
+                .setMetricName("accuracy");
+        double accuracy = multiclassClassificationEvaluator.evaluate(
+                predictions.select(
+                        round(col("rating"))
+                                .cast("double")
+                                .as("rating"),
+                        round(col("prediction"))
+                                .cast("double")
+                                .as("prediction")
+                )
+        );
+        System.out.println("Test set accuracy = " + accuracy);
+
+
         /*alsModel.save("alsModel");
         alsModel = ALSModel.load("alsModel");*/
+    }
+
+    /**
+     * rescaling rating to range [0, 1]
+     */
+    static void rescaledRatings() {
+        Row rowMinMax = dataSet.agg(
+                min(col("rating")),
+                max(col("rating"))).head();
+        Double minRating = rowMinMax.getAs(0);
+        Double maxRating = rowMinMax.getAs(1);
+        dataSet = dataSet
+                .withColumn(
+                        "rating",
+                        (col("rating").minus(minRating)).divide(maxRating - minRating)
+                );
+    }
+
+    /**
+     * showing dataSet total counts
+     */
+    static void showDataSetStatistics() {
+        /* showing dataSet total counts */
+        Long numRatings = dataSet.count();
+        Long numUsers = dataSet.select("userid").distinct().count();
+        Long numMovies = dataSet.select("itemid").distinct().count();
+        System.out.println("Got " + numRatings + " ratings from " + numUsers + " users on " + numMovies + " movies.");
     }
 }
 
