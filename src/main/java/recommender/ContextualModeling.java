@@ -32,6 +32,7 @@ import static org.apache.spark.sql.types.DataTypes.createStructField;
 public class ContextualModeling {
     private static Dataset<Row> dataSet;
     private static SparkSession spark;
+    private static String[] contextDimensions = new String[]{"Time", "Location", "Companion"};
     private static Map<String, String> userContext = new HashMap<>();
     private static RDD<LabeledPoint> convertedToLabeledPoint;
     private static FMModel model;
@@ -90,11 +91,9 @@ public class ContextualModeling {
                 "userid",
                 "itemid",
                 "rating"));
-        for (Map.Entry z : userContext.entrySet()) {
-            columns.remove(z.getKey());
-        }
+        columns.removeAll(Arrays.asList(contextDimensions));
         List<Integer> featureIndexes = new ArrayList<>();
-        featureIndexes.add(columns.indexOf("user_1001"));
+        featureIndexes.add(columns.indexOf("user_" + userId));
         featureIndexes.addAll(
                 userContext.entrySet().stream().map(
                         contextVariable -> columns.indexOf(
@@ -306,10 +305,8 @@ public class ContextualModeling {
         columnsList.removeAll(Arrays.asList(
                 "userid",
                 "itemid",
-                "rating",
-                "Time",
-                "Location",
-                "Companion"));
+                "rating"));
+        columnsList.removeAll(Arrays.asList(contextDimensions));
 
         FeaturesCount = columnsList.size();
 
