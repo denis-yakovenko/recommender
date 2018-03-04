@@ -19,6 +19,7 @@ import scala.collection.Seq;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.apache.spark.sql.functions.*;
 import static org.apache.spark.sql.functions.col;
@@ -34,6 +35,7 @@ public class ContextualModeling {
     private static Map<String, String> userContext = new HashMap<>();
     private static RDD<LabeledPoint> convertedToLabeledPoint;
     private static FMModel model;
+    private static int FeaturesCount;
 
     public static void main(String[] args) throws IOException {
         spark = SparkSession
@@ -66,7 +68,7 @@ public class ContextualModeling {
 
         /* creating an example of the user context */
         userContext.put("Time", "Weekend");
-        userContext.put("Location", "Home");
+        //userContext.put("Location", "Home");
         userContext.put("Companion", "Partner");
 
         /* getting and showing predictions for the user with id 1001 using contextual modeling */
@@ -83,31 +85,37 @@ public class ContextualModeling {
      * returns an RDD of (itemId, rating) pairs
      */
     private static Dataset<Row> getPredictions(String userId) {
-        List<String> columns = Arrays.asList(dataSet.columns());
-        /*Integer userIdI = Arrays.asList(userIndexer.labels()).indexOf(userId);
-        Integer timeIdI = Arrays.asList(timeIndexer.labels()).indexOf(userContext.get("Time"));
-        Integer locationIdI = Arrays.asList(locationIndexer.labels()).indexOf(userContext.get("Location"));
-        Integer companionIdI = Arrays.asList(companionIndexer.labels()).indexOf(userContext.get("Companion"));*/
-        Integer userColumnIndex = columns.indexOf("user_" + userId);
-        Integer timeColumnIndex = columns.indexOf("Time_" + userContext.get("Time"));
-        Integer locationColumnIndex = columns.indexOf("Location_" + userContext.get("Location"));
-        Integer companionColumnIndex = columns.indexOf("Companion_" + userContext.get("Companion"));
-        Integer vectorIndexShift = -6;
-        List<Row> predictRows = new ArrayList<>();
+        List<String> columns = new ArrayList<>(Arrays.asList(dataSet.columns()));
+        columns.removeAll(Arrays.asList(
+                "userid",
+                "itemid",
+                "rating"));
+        for(Map.Entry z: userContext.entrySet()){
+            columns.remove(z.getKey());
+        }
+        List<Integer> featureIndexes = new ArrayList<>();
+        featureIndexes.add(columns.indexOf("user_1001"));
+        featureIndexes.addAll(
+                userContext.entrySet().stream().map(
+                        contextVariable -> columns.indexOf(contextVariable.getKey() + "_" + contextVariable.getValue())).collect(Collectors.toList()
+                )
+        );
         /* creating list of the vectors to predict
         * each vector has persistent user and context columns,
         * and variable item columns values
         * */
+        double[] vectorValues = new double[featureIndexes.size() + 1];
+        Arrays.fill(vectorValues, 1);
+        Integer[] vectorIndexes = featureIndexes.toArray(new Integer[0]);
+        List<Row> predictRows = new ArrayList<>();
         for (Row itemRow : dataSet.select(col("itemid")).distinct().collectAsList()) {
             String itemId = itemRow.getAs(0);
-            Integer itemColumnIndex = columns.indexOf("item_" + itemId);
-            Vector features = Vectors.sparse(186, new int[]{
-                    userColumnIndex + vectorIndexShift,
-                    itemColumnIndex + vectorIndexShift,
-                    timeColumnIndex + vectorIndexShift,
-                    locationColumnIndex + vectorIndexShift,
-                    companionColumnIndex + vectorIndexShift
-            }, new double[]{1, 1, 1, 1, 1});
+            List<Integer> vectorIndexesForEachItem = new ArrayList<>(Arrays.asList(vectorIndexes));
+            vectorIndexesForEachItem.add(columns.indexOf("item_" + itemId));
+            Vector features = Vectors.sparse(
+                    FeaturesCount,
+                    vectorIndexesForEachItem.stream().mapToInt(i -> i).toArray(),
+                    vectorValues);
             Double rating = model.predict(features);
             predictRows.add(RowFactory.create(itemId, rating));
         }
@@ -290,6 +298,8 @@ public class ContextualModeling {
                 "Time",
                 "Location",
                 "Companion"));
+
+        FeaturesCount = columnsList.size();
 
         /* transform columns with features to vectors */
         VectorAssembler assembler = new VectorAssembler()
