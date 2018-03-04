@@ -78,7 +78,9 @@ public class ContextualPreAndPostFiltering {
         context c essentially serves as a query for selecting (filtering) relevant ratings data. */
         Dataset<Row> dataSetFilteredWithContext = dataSet;
         for (Map.Entry<String, String> contextVar : userContext.entrySet()) {
-            dataSetFilteredWithContext = dataSetFilteredWithContext.filter(col(contextVar.getKey()).equalTo(contextVar.getValue()));
+            dataSetFilteredWithContext = dataSetFilteredWithContext.filter(
+                    col(contextVar.getKey()).equalTo(contextVar.getValue())
+            );
         }
 
         /* getting list of the items for predict */
@@ -127,10 +129,13 @@ public class ContextualPreAndPostFiltering {
         we use filtering. */
         Dataset<Row> dataSetFilteredWithContext = dataSet;
         for (Map.Entry<String, String> contextVar : userContext.entrySet()) {
-            dataSetFilteredWithContext = dataSetFilteredWithContext.filter(col(contextVar.getKey()).equalTo(contextVar.getValue()));
+            dataSetFilteredWithContext = dataSetFilteredWithContext.filter(
+                    col(contextVar.getKey()).equalTo(contextVar.getValue())
+            );
         }
 
-        /* joining predictions and filtered dataset to get only post-filtered recommendations with original item names */
+        /* joining predictions and filtered dataset
+         * to get only post-filtered recommendations with original item names */
         return predictions
                 .join(dataSetFilteredWithContext,
                         predictions.col("itemidI").equalTo(dataSetFilteredWithContext.col("itemidI")), "inner")
@@ -201,16 +206,16 @@ public class ContextualPreAndPostFiltering {
 
         /* creating a naive baseline and compare it with the best model */
         Double meanRating = training.select(avg("rating")).head().getDouble(0);
-        Double baselineRMSE = Math.sqrt(test.select(avg(col("rating").$minus(meanRating).multiply(col("rating").$minus(meanRating)))).head().getDouble(0));
+        Double baselineRMSE = Math.sqrt(
+                test.select(avg(col("rating").$minus(meanRating).multiply(col("rating").$minus(meanRating))))
+                        .head()
+                        .getDouble(0)
+        );
         Double improvement = (baselineRMSE - RMSE) / baselineRMSE * 100;
-        System.out.println(String.format("model mean Rating %.3f baseline RMSE %.3f model RMSE %.3f", meanRating, baselineRMSE, RMSE));
-        System.out.println(String.format("The model differs from the baseline by %.3f percents", improvement));
-
-
-        //test.show();
-        //predictions.show();
-
-        //predictions.select(round(col("rating").as("rating")), round(col("prediction")).as("prediction")).show();
+        System.out.println(String.format(
+                "model mean Rating %.3f baseline RMSE %.3f model RMSE %.3f", meanRating, baselineRMSE, RMSE));
+        System.out.println(String.format(
+                "The model differs from the baseline by %.3f percents", improvement));
 
         MulticlassClassificationEvaluator multiclassClassificationEvaluator = new MulticlassClassificationEvaluator()
                 .setLabelCol("rating")
@@ -227,7 +232,6 @@ public class ContextualPreAndPostFiltering {
                 )
         );
         System.out.println("Test set accuracy = " + accuracy);
-
 
         /*alsModel.save("alsModel");
         alsModel = ALSModel.load("alsModel");*/

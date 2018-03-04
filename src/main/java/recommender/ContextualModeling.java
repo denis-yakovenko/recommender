@@ -90,15 +90,17 @@ public class ContextualModeling {
                 "userid",
                 "itemid",
                 "rating"));
-        for(Map.Entry z: userContext.entrySet()){
+        for (Map.Entry z : userContext.entrySet()) {
             columns.remove(z.getKey());
         }
         List<Integer> featureIndexes = new ArrayList<>();
         featureIndexes.add(columns.indexOf("user_1001"));
         featureIndexes.addAll(
                 userContext.entrySet().stream().map(
-                        contextVariable -> columns.indexOf(contextVariable.getKey() + "_" + contextVariable.getValue())).collect(Collectors.toList()
-                )
+                        contextVariable -> columns.indexOf(
+                                contextVariable.getKey() + "_" + contextVariable.getValue()
+                        )
+                ).collect(Collectors.toList())
         );
         /* creating list of the vectors to predict
         * each vector has persistent user and context columns,
@@ -163,13 +165,20 @@ public class ContextualModeling {
         );
         /*System.out.println("validate: real rating => predicted rating");
         for (Tuple2<Double, Double> t : predictions.collect())
-            System.out.println(String.format("real %.3f => predicted %.3f delta %.3f", t._2, t._1, Math.abs(t._1 - t._2)));*/
+            System.out.println(
+                    String.format("real %.3f => predicted %.3f delta %.3f", t._2, t._1, Math.abs(t._1 - t._2)));*/
         Double RMSE = Math.sqrt(predictions.mapToDouble(v -> Math.pow(v._1() - v._2(), 2)).mean());
         Double meanRating = training.toJavaRDD().mapToDouble(LabeledPoint::label).mean();
-        Double baselineRMSE = Math.sqrt(testLP.toJavaRDD().mapToDouble(p -> Math.pow(p.label() - meanRating, 2)).mean());
-        System.out.println(String.format("model mean Rating %.3f baseline RMSE %.3f model RMSE %.3f", meanRating, baselineRMSE, RMSE));
+        Double baselineRMSE = Math.sqrt(
+                testLP.toJavaRDD().mapToDouble(
+                        p -> Math.pow(p.label() - meanRating, 2)
+                ).mean()
+        );
+        System.out.println(String.format(
+                "model mean Rating %.3f baseline RMSE %.3f model RMSE %.3f", meanRating, baselineRMSE, RMSE));
         Double improvement = (baselineRMSE - RMSE) / baselineRMSE * 100;
-        System.out.println(String.format("The model differs from the baseline by %.3f percents", improvement));
+        System.out.println(String.format(
+                "The model differs from the baseline by %.3f percents", improvement));
 
         StructType schema = createStructType(new StructField[]{
                 createStructField("prediction", DataTypes.DoubleType, false),
@@ -282,7 +291,10 @@ public class ContextualModeling {
         }
 
         /* joining pivoted data sets into one */
-        Seq<String> keyFields = JavaConverters.asScalaIteratorConverter(Arrays.asList("userid", "itemid", "rating", "Time", "Location", "Companion").iterator()).asScala().toSeq();
+        Seq<String> keyFields = JavaConverters.asScalaIteratorConverter(
+                Arrays.asList("userid", "itemid", "rating", "Time", "Location", "Companion").iterator())
+                .asScala()
+                .toSeq();
         Dataset<Row> dataSetPivoted = dataSetPivotedByUser
                 .join(dataSetPivotedByItem, keyFields)
                 .join(dataSetPivotedByTime, keyFields)
