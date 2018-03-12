@@ -5,6 +5,7 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
+import org.apache.spark.mllib.regression.FMWithSGD;
 import org.apache.spark.mllib.regression.LabeledPoint;
 import org.apache.spark.ml.feature.*;
 import org.apache.spark.mllib.regression.FMModel;
@@ -83,14 +84,17 @@ public class ContextualModeling {
         /* load data in LabeledPoint format from the LibSVM-formatted file */
         //convertedToLabeledPoint = Util.loadLibSVM(spark, "pivotedDataSet");
 
+        for (int i = 1; i < 5; i++) {
+
         /* training the Factorization Machine Regression model given an RDD of (label, features) pairs */
-        trainModel();
+            trainModel();
 
         /* getting and showing predictions for the user with id 1001 using contextual modeling */
-        Dataset<Row> predictions = getPredictions("1001");
-        predictions
-                .orderBy(desc(ratingColumnName))
-                .show((int) predictions.count(), false);
+            Dataset<Row> predictions = getPredictions("1001");
+            predictions
+                    .orderBy(desc(ratingColumnName))
+                    .show((int) predictions.count(), false);
+        }
 
         spark.stop();
     }
@@ -154,12 +158,12 @@ public class ContextualModeling {
         Long numTest = test.count();
         System.out.println("Training: " + numTraining + ", test: " + numTest);*/
 
-        /*FMModel model = FMWithSGD.train(
+        /*model = FMWithSGD.train(
                 training, 0, 100, 0.15, 1.0,
-                new Tuple3<>(true, true, 4),
+                new Tuple3<>(false, false, 4),
                 new Tuple3<>(0.0, 0.0, 0.0),
                 0.1);*/
-
+        //if (1 == 0)
         model = FMWithLBFGS.train(
                 training,
                 0,
