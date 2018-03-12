@@ -118,7 +118,7 @@ public class JavaALSExample {
                 .setItemCol("movieId")
                 .setRatingCol("rating");
         ALSModel model = als.fit(training);
-
+/*
         // Evaluate the model by computing the RMSE on the test data
         // Note we set cold start strategy to 'drop' to ensure we don't get NaN evaluation metrics
         model.setColdStartStrategy("drop");
@@ -134,7 +134,7 @@ public class JavaALSExample {
         // Generate top 10 movie recommendations for each user
         Dataset<Row> userRecs = model.recommendForAllUsers(5);
         // Generate top 10 user recommendations for each movie
-        Dataset<Row> movieRecs = model.recommendForAllItems(5);
+        Dataset<Row> movieRecs = model.recommendForAllItems(5);*/
 
     /*
     // Generate top 10 movie recommendations for a specified set of users
@@ -145,8 +145,8 @@ public class JavaALSExample {
     Dataset<Row> movieSubSetRecs = model.recommendForItemSubset(movies, 10);
 */
         // $example off$
-        userRecs.show(false);
-        movieRecs.show(false);
+       /* userRecs.show(false);
+        movieRecs.show(false);*/
 /*
     userSubsetRecs.show();
     movieSubSetRecs.show();

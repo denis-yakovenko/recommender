@@ -10,9 +10,14 @@ import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import scala.collection.JavaConverters;
+import scala.collection.Seq;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.apache.spark.sql.functions.*;
 import static org.apache.spark.sql.functions.col;
@@ -104,25 +109,13 @@ class Util {
     }
 
     /**
-     * save data in LabeledPoint format to the LibSVM-formatted file
+     * load data in LabeledPoint format from the LibSVM-formatted file
      */
-    static void saveToLibSVM(SparkSession spark, RDD<LabeledPoint> dataLP, String dataOutputFolder) throws IOException {
-        /* save data in LabeledPoint format to the LibSVM-formatted file */
-        FileSystem fileSystem = FileSystem.get(spark.sparkContext().hadoopConfiguration());
-        Path outDir = new Path(dataOutputFolder);
-        if (fileSystem.exists(outDir))
-            fileSystem.delete(outDir, true);
-        MLUtils.saveAsLibSVMFile(dataLP.repartition(1, null), dataOutputFolder);
-    }
-
-    /**
-     * saving/loading libsvm
-     */
-    static RDD<LabeledPoint> loadLibSVM(SparkSession spark) {
+    static RDD<LabeledPoint> loadLibSVM(SparkSession spark, String dataInputFolder) {
         return MLUtils
                 .loadLibSVMFile(
                         spark.sparkContext(),
-                        "PlaygroundOutput/RatingOriginalNotScaledFeatureBinarizedSplitted"
+                        dataInputFolder
                 );
     }
 
@@ -165,4 +158,107 @@ class Util {
                 .fit(ContextualModeling.dataSet);
         ContextualModeling.dataSet = ContextualModeling.companionIndexer.transform(ContextualModeling.dataSet);
     }*/
+
+    /**
+     * pivoting values to columns
+     */
+    private static void pivotRowsToColumns() {
+        /*Dataset<Row> dataSetPivotedByUser = dataSet
+                .groupBy(col("userid"), col("itemid"), col("rating"), col("Time"), col("Location"), col("Companion"))
+                .pivot("userid")
+                .agg(lit(1));
+        dataSetPivotedByUser = dataSetPivotedByUser.na().fill(0.0);
+        for (Object c : dataSet.select("userid").distinct().toJavaRDD().map(r -> r.getAs("userid")).collect()) {
+            dataSetPivotedByUser = dataSetPivotedByUser.withColumnRenamed(c.toString(), "user_" + c);
+            dataSetPivotedByUser = dataSetPivotedByUser.withColumn("user_" + c, col("user_" + c).cast("double"));
+        }
+
+        Dataset<Row> dataSetPivotedByItem = dataSet
+                .groupBy(col("userid"), col("itemid"), col("rating"), col("Time"), col("Location"), col("Companion"))
+                .pivot("itemid")
+                .agg(lit(1));
+        dataSetPivotedByItem = dataSetPivotedByItem.na().fill(0.0);
+        for (Object c : dataSet.select("itemid").distinct().toJavaRDD().map(r -> r.getAs("itemid")).collect()) {
+            dataSetPivotedByItem = dataSetPivotedByItem.withColumnRenamed(c.toString(), "item_" + c);
+        }
+
+        Dataset<Row> dataSetPivotedByTime = dataSet
+                .groupBy(col("userid"), col("itemid"), col("rating"), col("Time"), col("Location"), col("Companion"))
+                .pivot("Time")
+                .agg(lit(1));
+        dataSetPivotedByTime = dataSetPivotedByTime.na().fill(0.0);
+        for (Object c : dataSet.select("Time").distinct().toJavaRDD().map(r -> r.getAs("Time")).collect()) {
+            dataSetPivotedByTime = dataSetPivotedByTime.withColumnRenamed(c.toString(), "Time_" + c);
+        }
+
+        Dataset<Row> dataSetPivotedByLocation = dataSet
+                .groupBy(col("userid"), col("itemid"), col("rating"), col("Time"), col("Location"), col("Companion"))
+                .pivot("Location")
+                .agg(lit(1));
+        dataSetPivotedByLocation = dataSetPivotedByLocation.na().fill(0.0);
+        for (Object c : dataSet.select("Location").distinct().toJavaRDD().map(r -> r.getAs("Location")).collect()) {
+            dataSetPivotedByLocation = dataSetPivotedByLocation.withColumnRenamed(c.toString(), "Location_" + c);
+        }
+
+        Dataset<Row> dataSetPivotedByCompanion = dataSet
+                .groupBy(col("userid"), col("itemid"), col("rating"), col("Time"), col("Location"), col("Companion"))
+                .pivot("Companion")
+                .agg(lit(1));
+        dataSetPivotedByCompanion = dataSetPivotedByCompanion.na().fill(0.0);
+        for (Object c : dataSet.select("Companion").distinct().toJavaRDD().map(r -> r.getAs("Companion")).collect()) {
+            dataSetPivotedByCompanion = dataSetPivotedByCompanion.withColumnRenamed(c.toString(), "Companion_" + c);
+        }
+
+        Seq<String> keyFields = JavaConverters.asScalaIteratorConverter(
+                Arrays.asList("userid", "itemid", "rating", "Time", "Location", "Companion").iterator())
+                .asScala()
+                .toSeq();
+        Dataset<Row> dataSetPivoted = dataSetPivotedByUser
+                .join(dataSetPivotedByItem, keyFields)
+                .join(dataSetPivotedByTime, keyFields)
+                .join(dataSetPivotedByLocation, keyFields)
+                .join(dataSetPivotedByCompanion, keyFields);
+
+        List<String> columnsList = new ArrayList<>(Arrays.asList(dataSetPivoted.columns()));
+        columnsList.removeAll(Arrays.asList(
+                "userid",
+                "itemid",
+                "rating"));
+        columnsList.removeAll(Arrays.asList(contextDimensions));
+
+        FeaturesCount = columnsList.size();
+
+        *//* transform columns with features to vectors *//*
+        VectorAssembler assembler = new VectorAssembler()
+                .setInputCols(columnsList.toArray(new String[0]))
+                .setOutputCol("features");
+        dataSet = assembler.transform(dataSetPivoted);*/
+    }
+
+    /**
+     * rescaling each feature to range [0, 1]
+     */
+    private static Dataset<Row> rescaleFeatures(Dataset<Row> dataSet) {
+        MinMaxScaler minMaxScaler = new MinMaxScaler()
+                .setInputCol("features")
+                .setOutputCol("scaledFeatures");
+        MinMaxScalerModel minMaxScalerModel = minMaxScaler.fit(dataSet);
+        return minMaxScalerModel
+                .transform(dataSet)
+                .drop("features")
+                .withColumnRenamed("scaledFeatures", "features");
+    }
+
+    /**
+     * save data in LabeledPoint format to the LibSVM-formatted file
+     */
+    static void saveToLibSVM(SparkSession spark, RDD<LabeledPoint> rdd, String dataOutputFolder) throws IOException {
+        /* save data in LabeledPoint format to the LibSVM-formatted file */
+        FileSystem fileSystem = FileSystem.get(spark.sparkContext().hadoopConfiguration());
+        Path outDir = new Path(dataOutputFolder);
+        if (fileSystem.exists(outDir))
+            fileSystem.delete(outDir, true);
+        MLUtils.saveAsLibSVMFile(rdd.repartition(1, null), dataOutputFolder);
+    }
 }
+

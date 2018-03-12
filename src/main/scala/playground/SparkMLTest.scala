@@ -164,7 +164,7 @@ object SparkMLTest {
       als.setRegParam(lambda)
 
       val alsModel = als.fit(alsTraining)
-      alsModel.setColdStartStrategy("drop")
+      //alsModel.setColdStartStrategy("drop")
       val alsPredictions = alsModel.transform(alsTest)
       val RMSE = alsEvaluator.evaluate(alsPredictions)
       println("RMSE = " + RMSE + ", rank = " + rank + ", lambda = " + lambda + ", maxIter = " + maxIter + ", implicitPref = " + implicitPref + ".")
@@ -180,8 +180,8 @@ object SparkMLTest {
 
     }
 
-    bestModel.recommendForAllUsers(10).show(truncate = false)
-    bestModel.recommendForAllItems(10).show(truncate = false)
+    /*bestModel.recommendForAllUsers(10).show(truncate = false)
+    bestModel.recommendForAllItems(10).show(truncate = false)*/
 
     spark.stop()
   }

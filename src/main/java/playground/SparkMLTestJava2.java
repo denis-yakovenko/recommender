@@ -146,7 +146,7 @@ public class SparkMLTestJava2 {
                 .setLabelCol("rating")
                 .setPredictionCol("prediction");
         ALSModel model = als.fit(training);
-        model.setColdStartStrategy("drop");
+        //model.setColdStartStrategy("drop");
         Dataset<Row> alsPredictions = model.transform(test);
         double RMSE = alsEvaluator.evaluate(alsPredictions);
         System.out.println("RMSE = " + RMSE);
@@ -171,10 +171,10 @@ public class SparkMLTestJava2 {
         predictions.select("itemidIndexed", "itemid").show(5);*/
 
         /* get recommendations for all users */
-        Dataset<Row> recommendForAllUsers = model.recommendForAllUsers(5);
+        /*Dataset<Row> recommendForAllUsers = model.recommendForAllUsers(5);
         Dataset<Row> recommendForAllItems = model.recommendForAllItems(5);
         recommendForAllUsers.show(false);
-        recommendForAllItems.show(false);
+        recommendForAllItems.show(false);*/
 
         /* contextual post-filtering */
         //recommendForAllUsers.head().get()

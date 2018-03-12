@@ -2,6 +2,4 @@
 .idea
 target
 recommender.iml
-/spark-warehouse/
 /metastore_db/
-/parquetPivotedDataSet/

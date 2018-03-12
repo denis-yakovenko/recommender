@@ -50,7 +50,7 @@ public class ContextualPreAndPostFiltering {
         /* indexing user, item and context columns by integer values */
         createIndexes();
 
-        /* rescaling rating to range [0, 1] */
+        /* rescaling rating to range [-1, 1] */
         rescaledRatings();
 
         /* training the ALS model */
@@ -103,6 +103,7 @@ public class ContextualPreAndPostFiltering {
                 .select(
                         dataSet.col("itemid"),
                         predictions.col("rating"))
+                .filter("rating > 0")
                 .distinct();
     }
 
@@ -142,6 +143,7 @@ public class ContextualPreAndPostFiltering {
                 .select(
                         dataSetFilteredWithContext.col("itemid"),
                         predictions.col("rating"))
+                .filter(col("rating").$greater(0))
                 .distinct();
     }
 
@@ -188,9 +190,9 @@ public class ContextualPreAndPostFiltering {
                 .setRatingCol("rating")
                 .setNonnegative(true);
         ParamMap[] paramGrid = new ParamGridBuilder()
-                .addGrid(als.regParam(), new double[]{0.01, 0.1})
-                .addGrid(als.maxIter(), new int[]{1, 10})
-                .addGrid(als.rank(), new int[]{8, 12})
+                .addGrid(als.regParam(), new double[]{0.001, 0.01, 0.1, 1.0})
+                .addGrid(als.maxIter(), new int[]{1, 10, 20})
+                .addGrid(als.rank(), new int[]{1, 4, 8, 12})
                 .build();
         TrainValidationSplit trainValidationSplit = new TrainValidationSplit()
                 .setEstimator(als)
@@ -238,7 +240,7 @@ public class ContextualPreAndPostFiltering {
     }
 
     /**
-     * rescaling rating to range [0, 1]
+     * rescaling rating to range [-1, 1]
      */
     static void rescaledRatings() {
         Row rowMinMax = dataSet.agg(
@@ -249,7 +251,10 @@ public class ContextualPreAndPostFiltering {
         dataSet = dataSet
                 .withColumn(
                         "rating",
-                        (col("rating").minus(minRating)).divide(maxRating - minRating)
+                        (col("rating").minus(minRating))
+                                .divide(maxRating - minRating)
+                                .multiply(2)
+                                .minus(1)
                 );
     }
 
