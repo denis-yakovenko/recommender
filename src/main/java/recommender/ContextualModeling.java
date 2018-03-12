@@ -84,10 +84,11 @@ public class ContextualModeling {
         /* load data in LabeledPoint format from the LibSVM-formatted file */
         //convertedToLabeledPoint = Util.loadLibSVM(spark, "pivotedDataSet");
 
-        for (int i = 1; i < 5; i++) {
 
         /* training the Factorization Machine Regression model given an RDD of (label, features) pairs */
             trainModel();
+
+        for (int i = 1; i <= 5; i++) {
 
         /* getting and showing predictions for the user with id 1001 using contextual modeling */
             Dataset<Row> predictions = getPredictions("1001");
@@ -151,9 +152,14 @@ public class ContextualModeling {
      */
     private static void trainModel() {
         /* splitting dataSet into test and training splits */
-        RDD<LabeledPoint>[] splits = convertedToLabeledPoint.randomSplit(new double[]{0.8, 0.2}, 0L);
-        RDD<LabeledPoint> training = splits[0];
-        RDD<LabeledPoint> test = splits[1];
+
+        if (1==0) {
+            RDD<LabeledPoint>[] splits = convertedToLabeledPoint.randomSplit(new double[]{0.8, 0.2}, 0L);
+            RDD<LabeledPoint> training = splits[0];
+            RDD<LabeledPoint> test = splits[1];
+        }
+        RDD<LabeledPoint> training = convertedToLabeledPoint;
+        RDD<LabeledPoint> test = convertedToLabeledPoint;
         /*Long numTraining = training.count();
         Long numTest = test.count();
         System.out.println("Training: " + numTraining + ", test: " + numTest);*/
@@ -175,52 +181,54 @@ public class ContextualModeling {
                 new Tuple3<>(false, false, 4),
                 new Tuple3<>(0.0, 0.0, 0.0),
                 0.1);
+        if (1==0) {
 
-        JavaPairRDD<Double, Double> predictions = test.toJavaRDD().mapToPair(
-                p -> {
-                    double predict = model.predict(p.features());
-                    return new Tuple2<>(predict, p.label());
-                }
-        );
-        Double RMSE = Math.sqrt(predictions.mapToDouble(v -> Math.pow(v._1() - v._2(), 2)).mean());
-        Double meanRating = training.toJavaRDD().mapToDouble(LabeledPoint::label).mean();
-        Double baselineRMSE = Math.sqrt(
-                test.toJavaRDD().mapToDouble(
-                        p -> Math.pow(p.label() - meanRating, 2)
-                ).mean()
-        );
-        System.out.println(String.format(
-                "model mean Rating %.3f baseline RMSE %.3f model RMSE %.3f", meanRating, baselineRMSE, RMSE));
-        Double improvement = (baselineRMSE - RMSE) / baselineRMSE * 100;
-        System.out.println(String.format(
-                "The model differs from the baseline by %.3f percents", improvement));
+            JavaPairRDD<Double, Double> predictions = test.toJavaRDD().mapToPair(
+                    p -> {
+                        double predict = model.predict(p.features());
+                        return new Tuple2<>(predict, p.label());
+                    }
+            );
+            Double RMSE = Math.sqrt(predictions.mapToDouble(v -> Math.pow(v._1() - v._2(), 2)).mean());
+            Double meanRating = training.toJavaRDD().mapToDouble(LabeledPoint::label).mean();
+            Double baselineRMSE = Math.sqrt(
+                    test.toJavaRDD().mapToDouble(
+                            p -> Math.pow(p.label() - meanRating, 2)
+                    ).mean()
+            );
+            System.out.println(String.format(
+                    "model mean Rating %.3f baseline RMSE %.3f model RMSE %.3f", meanRating, baselineRMSE, RMSE));
+            Double improvement = (baselineRMSE - RMSE) / baselineRMSE * 100;
+            System.out.println(String.format(
+                    "The model differs from the baseline by %.3f percents", improvement));
 
-        StructType schema = createStructType(new StructField[]{
-                createStructField("prediction", DataTypes.DoubleType, false),
-                createStructField("label", DataTypes.DoubleType, false)
-        });
+            StructType schema = createStructType(new StructField[]{
+                    createStructField("prediction", DataTypes.DoubleType, false),
+                    createStructField("label", DataTypes.DoubleType, false)
+            });
 
-        Dataset<Row> predictionsDF = spark
-                .sqlContext()
-                .createDataFrame(
-                        predictions.map(
-                                tuple -> RowFactory.create(tuple._1(), tuple._2())
-                        ), schema)
-                .toDF().select(
-                        round(col("label")/*, 2*/)
-                                .cast("double")
-                                .as("label"),
-                        round(col("prediction")/*, 2*/)
-                                .cast("double")
-                                .as("prediction")
-                );
+            Dataset<Row> predictionsDF = spark
+                    .sqlContext()
+                    .createDataFrame(
+                            predictions.map(
+                                    tuple -> RowFactory.create(tuple._1(), tuple._2())
+                            ), schema)
+                    .toDF().select(
+                            round(col("label")/*, 2*/)
+                                    .cast("double")
+                                    .as("label"),
+                            round(col("prediction")/*, 2*/)
+                                    .cast("double")
+                                    .as("prediction")
+                    );
 
-        MulticlassClassificationEvaluator evaluator = new MulticlassClassificationEvaluator()
-                .setLabelCol("label")
-                .setPredictionCol("prediction")
-                .setMetricName("accuracy");
-        double accuracy = evaluator.evaluate(predictionsDF);
-        System.out.println("Test set accuracy = " + accuracy);
+            MulticlassClassificationEvaluator evaluator = new MulticlassClassificationEvaluator()
+                    .setLabelCol("label")
+                    .setPredictionCol("prediction")
+                    .setMetricName("accuracy");
+            double accuracy = evaluator.evaluate(predictionsDF);
+            System.out.println("Test set accuracy = " + accuracy);
+        }
     }
 
     /**
