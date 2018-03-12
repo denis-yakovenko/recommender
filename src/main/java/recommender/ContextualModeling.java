@@ -84,11 +84,10 @@ public class ContextualModeling {
         /* load data in LabeledPoint format from the LibSVM-formatted file */
         //convertedToLabeledPoint = Util.loadLibSVM(spark, "pivotedDataSet");
 
+        for (int i = 1; i <= 5; i++) {
 
         /* training the Factorization Machine Regression model given an RDD of (label, features) pairs */
             trainModel();
-
-        for (int i = 1; i <= 5; i++) {
 
         /* getting and showing predictions for the user with id 1001 using contextual modeling */
             Dataset<Row> predictions = getPredictions("1001");
@@ -153,7 +152,7 @@ public class ContextualModeling {
     private static void trainModel() {
         /* splitting dataSet into test and training splits */
 
-        if (1==0) {
+        if (1 == 0) {
             RDD<LabeledPoint>[] splits = convertedToLabeledPoint.randomSplit(new double[]{0.8, 0.2}, 0L);
             RDD<LabeledPoint> training = splits[0];
             RDD<LabeledPoint> test = splits[1];
@@ -181,7 +180,7 @@ public class ContextualModeling {
                 new Tuple3<>(false, false, 4),
                 new Tuple3<>(0.0, 0.0, 0.0),
                 0.1);
-        if (1==0) {
+        if (1 == 0) {
 
             JavaPairRDD<Double, Double> predictions = test.toJavaRDD().mapToPair(
                     p -> {
