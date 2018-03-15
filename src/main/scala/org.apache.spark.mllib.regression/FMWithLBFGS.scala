@@ -215,6 +215,7 @@ class FMWithLBFGS(private var task: Int,
 
     val optimizer = new LBFGS(gradient, updater)
       .setNumIterations(numIterations)
+      .setConvergenceTol(0.1)
 
     val data = task match {
       case 0 =>

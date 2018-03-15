@@ -35,6 +35,8 @@ class FMModel(val task: Int,
     require(testData.size == numFeatures)
 
     var pred = intercept
+    //println(intercept)
+    //println(weightVector)
     if (weightVector.isDefined) {
       testData.foreachActive {
         case (i, v) =>
@@ -85,7 +87,7 @@ object FMModel extends Loader[FMModel] {
 
     def thisFormatVersion = "1.0"
 
-    def thisClassName = "org.apache.spark.mllib.regression.FMModel"
+    def thisClassName = "org.apache.spark.mllib.regression.FMModel$SaveLoadV1_0$"
 
     /* Model data for model import/export */
     case class Data(factorMatrix: Matrix, weightVector: Option[Vector], intercept: Double,
@@ -96,9 +98,13 @@ object FMModel extends Loader[FMModel] {
       import sqlContext.implicits._
       // Create JSON metadata.
       val metadata = compact(render(
-        ("class" -> this.getClass.getName) ~ ("version" -> thisFormatVersion) ~
-          ("numFeatures" -> data.factorMatrix.numCols) ~ ("numFactors" -> data.factorMatrix.numRows)
-          ~ ("min" -> data.min) ~ ("max" -> data.max) ~ ("task" -> data.task)))
+        ("class" -> this.getClass.getName) ~
+          ("version" -> thisFormatVersion) ~
+          ("numFeatures" -> data.factorMatrix.numCols) ~
+          ("numFactors" -> data.factorMatrix.numRows) ~
+          ("min" -> data.min) ~
+          ("max" -> data.max) ~
+          ("task" -> data.task)))
       sc.parallelize(Seq(metadata), 1).saveAsTextFile(metadataPath(path))
 
       // Create Parquet data.
@@ -114,10 +120,14 @@ object FMModel extends Loader[FMModel] {
       checkSchema[Data](dataRDD.schema)
       val dataArray = dataRDD.select("task", "factorMatrix", "weightVector", "intercept", "min", "max").take(1)
       assert(dataArray.length == 1, s"Unable to load FMModel data from: ${dataPath(path)}")
+      //dataRDD.show()
+      //dataArray.foreach(println)
       val data = dataArray(0)
       val task = data.getInt(0)
       val factorMatrix = data.getAs[Matrix](1)
-      val weightVector = data.getAs[Option[Vector]](2)
+      //val v = data.getAs[Vector](2)
+      val weightVector: Option[Vector] = Option(data.getAs[Vector](2))
+      //v.asInstanceOf[Option[Vector]]
       val intercept = data.getDouble(3)
       val min = data.getDouble(4)
       val max = data.getDouble(5)
